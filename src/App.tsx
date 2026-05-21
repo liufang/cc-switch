@@ -124,6 +124,7 @@ const VALID_APPS: AppId[] = [
   "opencode",
   "openclaw",
   "hermes",
+  "sohocode",
 ];
 
 const getInitialApp = (): AppId => {
@@ -189,6 +190,7 @@ function App() {
     opencode: true,
     openclaw: true,
     hermes: true,
+    sohocode: true,
   };
 
   const getFirstVisibleApp = (): AppId => {
@@ -199,6 +201,7 @@ function App() {
     if (visibleApps.opencode) return "opencode";
     if (visibleApps.openclaw) return "openclaw";
     if (visibleApps.hermes) return "hermes";
+    if (visibleApps.sohocode) return "sohocode";
     return "claude"; // fallback
   };
 
@@ -207,21 +210,6 @@ function App() {
       setActiveApp(getFirstVisibleApp());
     }
   }, [visibleApps, activeApp]);
-
-  // Fallback from sessions view when switching to an app without session support
-  useEffect(() => {
-    if (
-      currentView === "sessions" &&
-      sharedFeatureApp !== "claude" &&
-      sharedFeatureApp !== "codex" &&
-      sharedFeatureApp !== "opencode" &&
-      sharedFeatureApp !== "openclaw" &&
-      sharedFeatureApp !== "gemini" &&
-      sharedFeatureApp !== "hermes"
-    ) {
-      setCurrentView("providers");
-    }
-  }, [sharedFeatureApp, currentView]);
 
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [usageProvider, setUsageProvider] = useState<Provider | null>(null);
@@ -275,7 +263,11 @@ function App() {
       currentView === "openclawAgents");
   const { data: openclawHealthWarnings = [] } =
     useOpenClawHealth(isOpenClawView);
-  const hasSkillsSupport = sharedFeatureApp !== "openclaw";
+  const hasPromptSupport = sharedFeatureApp !== "sohocode";
+  const hasSkillsSupport =
+    sharedFeatureApp !== "openclaw" && sharedFeatureApp !== "sohocode";
+  const hasMcpSupport =
+    sharedFeatureApp !== "openclaw" && sharedFeatureApp !== "sohocode";
   const hasSessionSupport =
     sharedFeatureApp === "claude" ||
     sharedFeatureApp === "codex" ||
@@ -283,6 +275,33 @@ function App() {
     sharedFeatureApp === "openclaw" ||
     sharedFeatureApp === "gemini" ||
     sharedFeatureApp === "hermes";
+
+  useEffect(() => {
+    if (currentView === "sessions" && !hasSessionSupport) {
+      setCurrentView("providers");
+      return;
+    }
+    if (currentView === "prompts" && !hasPromptSupport) {
+      setCurrentView("providers");
+      return;
+    }
+    if (
+      (currentView === "skills" || currentView === "skillsDiscovery") &&
+      !hasSkillsSupport
+    ) {
+      setCurrentView("providers");
+      return;
+    }
+    if (currentView === "mcp" && !hasMcpSupport) {
+      setCurrentView("providers");
+    }
+  }, [
+    currentView,
+    hasMcpSupport,
+    hasPromptSupport,
+    hasSessionSupport,
+    hasSkillsSupport,
+  ]);
 
   const {
     addProvider,
@@ -1459,7 +1478,13 @@ function App() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setCurrentView("mcp")}
-                                className="text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 w-8 px-2"
+                                className={cn(
+                                  "text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5",
+                                  "transition-all duration-200 ease-in-out overflow-hidden",
+                                  hasMcpSupport
+                                    ? "opacity-100 w-8 scale-100 px-2"
+                                    : "opacity-0 w-0 scale-75 pointer-events-none px-0 -ml-1",
+                                )}
                                 title={t("mcp.title")}
                               >
                                 <McpIcon size={16} />
@@ -1534,10 +1559,16 @@ function App() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => setCurrentView("prompts")}
-                                className="text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5 w-8 px-2"
+                                className={cn(
+                                  "text-muted-foreground hover:text-foreground hover:bg-black/5 dark:hover:bg-white/5",
+                                  "transition-all duration-200 ease-in-out overflow-hidden",
+                                  hasPromptSupport
+                                    ? "opacity-100 w-8 scale-100 px-2"
+                                    : "opacity-0 w-0 scale-75 pointer-events-none px-0 -ml-1",
+                                )}
                                 title={t("prompts.manage")}
                               >
-                                <Book className="w-4 h-4" />
+                                <Book className="flex-shrink-0 w-4 h-4" />
                               </Button>
                               <Button
                                 variant="ghost"

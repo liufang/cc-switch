@@ -20,6 +20,7 @@ interface DirectorySettingsProps {
   opencodeDir?: string;
   openclawDir?: string;
   hermesDir?: string;
+  sohocodeDir?: string;
   onDirectoryChange: (app: DirectoryAppId, value?: string) => void;
   onBrowseDirectory: (app: DirectoryAppId) => Promise<void>;
   onResetDirectory: (app: DirectoryAppId) => Promise<void>;
@@ -37,6 +38,7 @@ export function DirectorySettings({
   opencodeDir,
   openclawDir,
   hermesDir,
+  sohocodeDir,
   onDirectoryChange,
   onBrowseDirectory,
   onResetDirectory,
@@ -157,6 +159,19 @@ export function DirectorySettings({
           onChange={(val) => onDirectoryChange("hermes", val)}
           onBrowse={() => onBrowseDirectory("hermes")}
           onReset={() => onResetDirectory("hermes")}
+        />
+
+        <DirectoryInput
+          label={t("settings.sohocodeConfigDir", { defaultValue: "sohoCode 配置目录" })}
+          description={undefined}
+          value={sohocodeDir}
+          resolvedValue={resolvedDirs.sohocode}
+          placeholder={t("settings.browsePlaceholderSohoCode", {
+            defaultValue: "选择 sohoCode 配置目录",
+          })}
+          onChange={(val) => onDirectoryChange("sohocode", val)}
+          onBrowse={() => onBrowseDirectory("sohocode")}
+          onReset={() => onResetDirectory("sohocode")}
         />
       </section>
     </div>

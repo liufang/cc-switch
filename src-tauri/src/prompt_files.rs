@@ -25,6 +25,13 @@ pub fn prompt_file_path(app: &AppType) -> Result<PathBuf, AppError> {
         AppType::OpenCode => get_opencode_dir(),
         AppType::OpenClaw => get_openclaw_dir(),
         AppType::Hermes => crate::hermes_config::get_hermes_dir(),
+        AppType::SohoCode => {
+            return Err(AppError::localized(
+                "sohocode.prompts_unsupported",
+                "SohoCode 暂不支持 Prompts",
+                "SohoCode does not support Prompts",
+            ));
+        }
         AppType::ClaudeDesktop => unreachable!("handled above"),
     };
 
@@ -32,7 +39,9 @@ pub fn prompt_file_path(app: &AppType) -> Result<PathBuf, AppError> {
         AppType::Claude => "CLAUDE.md",
         AppType::Codex => "AGENTS.md",
         AppType::Gemini => "GEMINI.md",
-        AppType::OpenCode | AppType::OpenClaw | AppType::Hermes => "AGENTS.md",
+        AppType::OpenCode | AppType::OpenClaw | AppType::Hermes | AppType::SohoCode => {
+            "AGENTS.md"
+        }
         AppType::ClaudeDesktop => unreachable!("handled above"),
     };
 

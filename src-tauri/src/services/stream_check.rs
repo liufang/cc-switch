@@ -282,6 +282,13 @@ impl StreamCheckService {
                 // Already handled via early dispatch above
                 unreachable!("OpenCode/OpenClaw/Hermes 已通过 check_once_without_adapter 处理")
             }
+            AppType::SohoCode => {
+                return Err(AppError::localized(
+                    "sohocode_stream_check_not_supported",
+                    "SohoCode 暂不支持流式健康检查",
+                    "SohoCode stream health check is not supported",
+                ));
+            }
         };
 
         let response_time = start.elapsed().as_millis() as u64;
@@ -1382,8 +1389,8 @@ impl StreamCheckService {
                 // Try to extract first model from the models object
                 Self::extract_opencode_model(provider).unwrap_or_else(|| "gpt-4o".to_string())
             }
-            AppType::OpenClaw | AppType::Hermes => {
-                // OpenClaw/Hermes use models array in settings_config
+            AppType::OpenClaw | AppType::Hermes | AppType::SohoCode => {
+                // OpenClaw/Hermes/SohoCode use models array in settings_config
                 // Try to extract first model from the models array
                 Self::extract_openclaw_model(provider).unwrap_or_else(|| "gpt-4o".to_string())
             }

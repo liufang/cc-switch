@@ -349,7 +349,7 @@ fn settings_contain_common_config(app_type: &AppType, settings: &Value, snippet:
             }
             _ => false,
         },
-        AppType::OpenCode | AppType::OpenClaw | AppType::Hermes | AppType::ClaudeDesktop => false,
+        AppType::OpenCode | AppType::OpenClaw | AppType::Hermes | AppType::SohoCode | AppType::ClaudeDesktop => false,
     }
 }
 
@@ -419,7 +419,7 @@ pub(crate) fn remove_common_config_from_settings(
             }
             Ok(result)
         }
-        AppType::OpenCode | AppType::OpenClaw | AppType::Hermes | AppType::ClaudeDesktop => {
+        AppType::OpenCode | AppType::OpenClaw | AppType::Hermes | AppType::SohoCode | AppType::ClaudeDesktop => {
             Ok(settings.clone())
         }
     }
@@ -476,7 +476,7 @@ fn apply_common_config_to_settings(
             }
             Ok(result)
         }
-        AppType::OpenCode | AppType::OpenClaw | AppType::Hermes | AppType::ClaudeDesktop => {
+        AppType::OpenCode | AppType::OpenClaw | AppType::Hermes | AppType::SohoCode | AppType::ClaudeDesktop => {
             Ok(settings.clone())
         }
     }
@@ -842,6 +842,11 @@ pub(crate) fn write_live_snapshot(app_type: &AppType, provider: &Provider) -> Re
             crate::hermes_config::set_provider(&provider.id, provider.settings_config.clone())?;
             log::debug!("Hermes provider '{}' written to live config", provider.id);
         }
+        AppType::SohoCode => {
+            crate::sohocode_config::set_provider(&provider.id, provider.settings_config.clone())?;
+            crate::sohocode_config::apply_switch_defaults(&provider.id, &provider.settings_config)?;
+            log::debug!("SohoCode provider '{}' written to live config", provider.id);
+        }
     }
     Ok(())
 }
@@ -1055,6 +1060,17 @@ pub fn read_live_settings(app_type: AppType) -> Result<Value, AppError> {
             let config = crate::hermes_config::yaml_to_json(&yaml_config)?;
             Ok(config)
         }
+        AppType::SohoCode => {
+            let config_path = crate::sohocode_config::get_sohocode_config_path();
+            if !config_path.exists() {
+                return Err(AppError::localized(
+                    "sohocode.config.missing",
+                    "SohoCode 配置文件不存在",
+                    "SohoCode configuration file not found",
+                ));
+            }
+            crate::sohocode_config::read_sohocode_config()
+        }
     }
 }
 
@@ -1144,8 +1160,8 @@ pub fn import_default_config(state: &AppState, app_type: AppType) -> Result<bool
                 "config": config_obj
             })
         }
-        // OpenCode, OpenClaw and Hermes use additive mode and are handled by early return above
-        AppType::OpenCode | AppType::OpenClaw | AppType::Hermes => {
+        // OpenCode, OpenClaw, Hermes and SohoCode use additive mode and are handled by early return above
+        AppType::OpenCode | AppType::OpenClaw | AppType::Hermes | AppType::SohoCode => {
             unreachable!("additive mode apps are handled by early return")
         }
     };

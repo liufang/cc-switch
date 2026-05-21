@@ -1770,6 +1770,7 @@ impl ProviderService {
             AppType::OpenCode => Self::extract_opencode_common_config(&provider.settings_config),
             AppType::OpenClaw => Self::extract_openclaw_common_config(&provider.settings_config),
             AppType::Hermes => Ok(String::new()), // Hermes doesn't use common config snippets
+            AppType::SohoCode => Ok(String::new()), // SohoCode doesn't use common config snippets
         }
     }
 
@@ -1786,6 +1787,7 @@ impl ProviderService {
             AppType::OpenCode => Self::extract_opencode_common_config(settings_config),
             AppType::OpenClaw => Self::extract_openclaw_common_config(settings_config),
             AppType::Hermes => Ok(String::new()), // Hermes doesn't use common config snippets
+            AppType::SohoCode => Ok(String::new()), // SohoCode doesn't use common config snippets
         }
     }
 
@@ -2174,6 +2176,15 @@ impl ProviderService {
                     ));
                 }
             }
+            AppType::SohoCode => {
+                if !provider.settings_config.is_object() {
+                    return Err(AppError::localized(
+                        "provider.sohocode.settings.not_object",
+                        "SohoCode 配置必须是 JSON 对象",
+                        "SohoCode configuration must be a JSON object",
+                    ));
+                }
+            }
         }
 
         // Validate and clean UsageScript configuration (common for all app types)
@@ -2361,6 +2372,7 @@ impl ProviderService {
                 let api_key = provider
                     .settings_config
                     .get("apiKey")
+                    .or_else(|| provider.settings_config.get("api_key"))
                     .and_then(|v| v.as_str())
                     .ok_or_else(|| {
                         AppError::localized(
@@ -2374,6 +2386,32 @@ impl ProviderService {
                 let base_url = provider
                     .settings_config
                     .get("baseUrl")
+                    .or_else(|| provider.settings_config.get("base_url"))
+                    .and_then(|v| v.as_str())
+                    .unwrap_or("")
+                    .to_string();
+
+                Ok((api_key, base_url))
+            }
+            AppType::SohoCode => {
+                let api_key = provider
+                    .settings_config
+                    .get("api_key")
+                    .or_else(|| provider.settings_config.get("apiKey"))
+                    .and_then(|v| v.as_str())
+                    .ok_or_else(|| {
+                        AppError::localized(
+                            "provider.sohocode.api_key.missing",
+                            "缺少 API Key",
+                            "API key is missing",
+                        )
+                    })?
+                    .to_string();
+
+                let base_url = provider
+                    .settings_config
+                    .get("base_url")
+                    .or_else(|| provider.settings_config.get("baseUrl"))
                     .and_then(|v| v.as_str())
                     .unwrap_or("")
                     .to_string();

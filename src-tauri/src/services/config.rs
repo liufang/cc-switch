@@ -136,6 +136,9 @@ impl ConfigService {
             AppType::Hermes => {
                 // Hermes uses additive mode, no live sync needed
             }
+            AppType::SohoCode => {
+                // SohoCode providers are managed directly in its live config file
+            }
         }
 
         Ok(())
